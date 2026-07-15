@@ -66,16 +66,45 @@ def _print_digest(jobs: list[Job]) -> None:
 
 def run_test_notify() -> int:
     settings = config.settings()
-    sample = Job(
-        company="Example Corp",
-        title="Software Engineer Intern (Summer 2027)",
-        url="https://example.com/jobs/swe-intern",
-        locations=["New York, NY"],
-        category="swe",
-        season="summer",
-        year=2027,
-    )
-    sent = discord_notify.send_discord([sample], settings.get("discord", {}))
+    samples = [
+        Job(
+            company="Example Corp",
+            title="Software Engineer Intern (Summer 2027)",
+            url="https://example.com/jobs/swe-intern",
+            locations=["New York, NY"],
+            category="swe",
+            season="summer",
+            year=2027,
+        ),
+        Job(
+            company="Northstar Labs",
+            title="Backend Engineering Intern",
+            url="https://example.com/jobs/backend-intern",
+            locations=["San Francisco, CA"],
+            category="swe",
+            season="fall",
+            year=2026,
+        ),
+        Job(
+            company="Acme Cloud",
+            title="Machine Learning Intern",
+            url="https://example.com/jobs/ml-intern",
+            locations=["Remote"],
+            category="swe",
+            season="spring",
+            year=2027,
+        ),
+        Job(
+            company="Pioneer Robotics",
+            title="Firmware Engineering Intern",
+            url="https://example.com/jobs/firmware-intern",
+            locations=["Boston, MA"],
+            category="swe",
+            season="summer",
+            year=2027,
+        ),
+    ]
+    sent = discord_notify.send_discord(samples, settings.get("discord", {}))
     log.info("test-notify: discord=%s", sent)
     return 0 if sent else 1
 

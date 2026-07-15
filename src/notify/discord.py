@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import re
 import time
+from urllib.parse import quote
 
 import requests
 
@@ -14,12 +15,15 @@ log = logging.getLogger(__name__)
 
 _CATEGORY_LABELS = {
     "swe": "💻 Software Engineering",
-    "other": "🧩 Other",
+    "other": "🧩 Other Opportunities",
 }
 _CATEGORY_COLORS = {
     "swe": 0x5865F2,
     "other": 0x99AAB5,
 }
+_DEFAULT_AVATAR_URL = (
+    "https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/72x72/1f514.png"
+)
 _MAX_EMBED_DESCRIPTION = 3_800
 _MAX_EMBED_TEXT_PER_MESSAGE = 5_800
 
@@ -44,20 +48,23 @@ def group_by_category(jobs: list[Job], order: list[str]) -> list[tuple[str, list
 
 
 def _escape_markdown(value: str) -> str:
-    return re.sub(r"([\\*_`~|>])", r"\\\1", value)
+    return re.sub(r"([\\*_`~|>\[\]#])", r"\\\1", value)
 
 
-def _job_line(job: Job) -> str:
+def _job_card(job: Job) -> str:
     title = _escape_markdown(job.title[:256])
     company = _escape_markdown(job.company[:128])
-    metadata = [
-        job.location_str[:256] or "Location not listed",
-        job.season,
-        str(job.year) if job.year else None,
-    ]
-    details = _escape_markdown(" · ".join(value for value in metadata if value))
-    url = job.url[:1_800]
-    return f"**{title}** — {company}\n{details} · <{url}>"
+    location = _escape_markdown(job.location_str[:256] or "Location not listed")
+    season = job.season.title() if job.season else None
+    term = " ".join(value for value in (season, str(job.year) if job.year else None) if value)
+    url = quote(job.url[:1_800], safe=":/?#@!$&'*+,;=%")
+
+    internship_term = f"{_escape_markdown(term)} Internship" if term else "Internship"
+    return f"**[{title}]({url})**\n{company} — {location}\n{internship_term}"
+
+
+def _role_count(count: int) -> str:
+    return f"{count} {'role' if count == 1 else 'roles'}"
 
 
 def _category_embeds(category: str, jobs: list[Job]) -> list[dict]:
@@ -65,21 +72,22 @@ def _category_embeds(category: str, jobs: list[Job]) -> list[dict]:
     current: list[str] = []
     current_length = 0
     for job in sorted(jobs, key=lambda item: (item.company.lower(), item.title.lower())):
-        line = _job_line(job)
-        added_length = len(line) + (2 if current else 0)
+        card = _job_card(job)
+        added_length = len(card) + (2 if current else 0)
         if current and current_length + added_length > _MAX_EMBED_DESCRIPTION:
             chunks.append("\n\n".join(current))
             current = []
             current_length = 0
-        current.append(line)
-        current_length += len(line) + (2 if len(current) > 1 else 0)
+        current.append(card)
+        current_length += len(card) + (2 if len(current) > 1 else 0)
     if current:
         chunks.append("\n\n".join(current))
 
     label = _CATEGORY_LABELS.get(category, category.title())
     return [
         {
-            "title": f"{label} ({len(jobs)})" + (f" · Part {index + 1}" if len(chunks) > 1 else ""),
+            "title": f"{label} · {_role_count(len(jobs))}"
+            + (f" · Part {index + 1}/{len(chunks)}" if len(chunks) > 1 else ""),
             "description": chunk,
             "color": _CATEGORY_COLORS.get(category, _CATEGORY_COLORS["other"]),
         }
@@ -90,14 +98,6 @@ def _category_embeds(category: str, jobs: list[Job]) -> list[dict]:
 def build_payloads(jobs: list[Job], discord_cfg: dict) -> list[dict]:
     order = discord_cfg.get("category_order", ["swe", "other"])
     grouped = group_by_category(jobs, order)
-    priority = priority_jobs(jobs, discord_cfg.get("priority_companies", []))
-
-    if priority:
-        companies = ", ".join(sorted({job.company for job in priority}))
-        headline = f"🚨 **Priority internship alert: {companies}** — {len(jobs)} new posting(s)"
-    else:
-        headline = f"🚀 **Internship alert** — {len(jobs)} new posting(s)"
-    headline = headline[:2_000]
 
     embeds = [
         embed
@@ -123,10 +123,9 @@ def build_payloads(jobs: list[Job], discord_cfg: dict) -> list[dict]:
     if not payloads:
         payloads.append({})
 
-    payloads[0]["content"] = headline
     for payload in payloads:
-        payload["username"] = discord_cfg.get("username", "Internship Alerts")
-        avatar_url = discord_cfg.get("avatar_url")
+        payload["username"] = discord_cfg.get("username", "Intern Alerts")
+        avatar_url = discord_cfg.get("avatar_url", _DEFAULT_AVATAR_URL)
         if avatar_url:
             payload["avatar_url"] = avatar_url
         payload["allowed_mentions"] = {"parse": []}

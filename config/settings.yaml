@@ -24,7 +24,8 @@ max_jobs_per_source: 0
 discord:
   enabled: true
   webhook_url: ""
-  username: "Internship Alerts"
+  username: "Intern Alerts"
+  avatar_url: "https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/72x72/1f514.png"
   timeout_seconds: 20
   max_retries: 3
   inter_message_delay_seconds: 0.5

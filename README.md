@@ -1,13 +1,15 @@
 # intern_pos_emailer
 
-A bot that **runs daily on GitHub Actions** and sends Discord alerts for **new US
+A bot that **runs three times daily on GitHub Actions** and sends Discord alerts for **new US
 software engineering internship openings** (Summer & Spring / off-cycle).
 It pulls from community internship aggregators and directly from company career
-sites (via their ATS APIs), filters to what you care about, remembers what it has
-already shown you, and only alerts on **new** postings.
+sites (including Greenhouse, Ashby, Workday, iCIMS, Oracle Cloud, Amazon Jobs,
+SmartRecruiters, and selected public career APIs), filters to what you care
+about, remembers what it has already shown you, and only alerts on **new**
+postings.
 
 ```
-sources (github lists + Greenhouse/Lever/Ashby/Workday)
+sources (github lists + company career APIs)
    → normalize → filter (internship · season · category · US)
    → dedup vs data/seen_jobs.json
    → Discord webhook alert
@@ -25,13 +27,13 @@ All of this is tunable in `config/` — no code changes needed.
 ## Layout
 ```
 config/        # all tunables (no code): companies, github lists, filters, settings
-src/sources/   # one module per source type (github lists + 4 ATS APIs)
+src/sources/   # one module per source type and supported careers platform
 src/filters.py # internship / season / category / US-location rules
 src/dedup.py   # seen-jobs state (data/seen_jobs.json)
 src/notify/    # Discord webhook formatting and delivery
 src/apply/     # FUTURE auto-apply scaffold (not yet implemented)
 src/main.py    # orchestrator + CLI
-.github/workflows/daily.yml  # the daily cron
+.github/workflows/daily.yml  # scheduled GitHub Actions runs
 tests/         # pytest: filters + dedup
 ```
 
@@ -74,21 +76,22 @@ create a webhook, and copy its URL into `config/settings.local.yaml` under
 `discord.webhook_url`. Local settings override `config/settings.yaml`. A webhook
 URL grants permission to post in that channel, so never commit or share it.
 
-## Deploy (private repo + daily cron)
+## Deploy (private repo + scheduled runs)
 1. Create a **private** GitHub repo and push this project.
 2. Add a GitHub Actions repository secret named `DISCORD_WEBHOOK_URL`. The local
    `config/settings.local.yaml` override is used when running on your machine.
 3. (Optional) Run `python -m src.main --seed` locally once and commit the updated
    `data/seen_jobs.json`, so your first scheduled alert is a small delta rather than
    the whole backlog.
-4. The workflow `.github/workflows/daily.yml` runs at **13:00 UTC daily** and also
-   on-demand from the **Actions tab** (`workflow_dispatch`, with a dry-run toggle).
+4. The workflow `.github/workflows/daily.yml` runs daily at **01:00, 13:00, and
+   19:00 UTC** and also on-demand from the **Actions tab** (`workflow_dispatch`,
+   with a dry-run toggle).
 5. Each run commits the updated `data/seen_jobs.json` back to the repo, so the bot
    remembers what it already sent.
 
 Notes:
-- Private-repo Actions get 2,000 free minutes/month; a run is ~1–2 min → effectively free.
-- GitHub disables scheduled workflows after **60 days of no repo activity** — the daily
+- Private-repo Actions get 2,000 free minutes/month; each run is ~1–2 min.
+- GitHub disables scheduled workflows after **60 days of no repo activity** — the regular
   state commit normally counts, but you can also re-trigger manually to keep it alive.
 - Adjust the time by editing the `cron:` line (it's in UTC).
 

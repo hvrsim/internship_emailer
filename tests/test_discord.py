@@ -25,23 +25,39 @@ def test_priority_company_uses_token_matching():
     assert not discord.is_priority_company("Snapple", PRIORITY)
 
 
-def test_payload_groups_jobs_and_highlights_priority_companies():
+def test_payload_groups_jobs_without_text_above_the_cards():
     payloads = discord.build_payloads(
         [_job("Meta"), _job("Acme", "other")],
         {
             "category_order": ["swe", "other"],
             "priority_companies": PRIORITY,
-            "username": "Job Bot",
+            "username": "Intern Alerts",
         },
     )
 
-    assert "Priority internship alert: Meta" in payloads[0]["content"]
-    assert payloads[0]["username"] == "Job Bot"
+    assert "content" not in payloads[0]
+    assert payloads[0]["username"] == "Intern Alerts"
+    assert payloads[0]["avatar_url"] == discord._DEFAULT_AVATAR_URL
     assert [embed["title"] for embed in payloads[0]["embeds"]] == [
-        "💻 Software Engineering (1)",
-        "🧩 Other (1)",
+        "💻 Software Engineering · 1 role",
+        "🧩 Other Opportunities · 1 role",
     ]
     assert payloads[0]["allowed_mentions"] == {"parse": []}
+
+
+def test_payload_formats_each_job_as_a_clean_linked_card():
+    job = _job("Acme")
+    job.title = "Software Engineer Intern (Summer 2027)"
+    payload = discord.build_payloads([job], {})[0]
+    embed = payload["embeds"][0]
+
+    assert embed["description"] == (
+        "**[Software Engineer Intern (Summer 2027)](https://example.com/Acme)**\n"
+        "Acme — New York, NY\n"
+        "Summer 2027 Internship"
+    )
+    assert "footer" not in embed
+    assert embed["color"] == 0x5865F2
 
 
 def test_send_discord_posts_to_webhook_from_settings():

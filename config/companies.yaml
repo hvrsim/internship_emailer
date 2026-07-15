@@ -11,10 +11,10 @@
 # Tokens below were verified to return 200 (run `--dry-run` and check logs for
 # any new 404s). `enabled: false` skips an entry without deleting it.
 #
-# NOTE: Several giants run custom career sites with NO public ATS API and so
-# can't be pulled directly here — Microsoft, Google, Apple, Amazon, Meta, Tesla,
-# Uber, JPMorgan, Citadel, Two Sigma. Their internships still reach you via the
-# community lists in config/github_lists.yaml (which cover these heavily).
+# Companies without a stable unauthenticated endpoint remain covered through
+# the community lists in config/github_lists.yaml. This currently includes
+# Microsoft, Meta, Citadel, Citadel Securities, Cisco, ServiceNow, Atlassian,
+# IBM, Trane Technologies, Qualcomm, Rippling, and Walmart.
 
 greenhouse:
   # Trading firms can still publish eligible software engineering internships.
@@ -48,6 +48,26 @@ greenhouse:
   - { company: Verkada,            token: verkada }
   - { company: Qualtrics,          token: qualtrics }
   - { company: Anduril,            token: andurilindustries }
+  - { company: Chicago Trading Company, token: chicagotrading }
+  - { company: Otter.ai,           token: otterai }
+  - { company: BILL,               token: billcom }
+  - { company: The Trade Desk,     token: thetradedesk }
+  - { company: Asana,              token: asana }
+  - { company: Roblox,             token: roblox }
+  - { company: XPeng,              token: xpengmotors }
+  - { company: Neuralink,          token: neuralink }
+  - { company: K2 Space,           token: k2spacecorporation }
+  - { company: Figma,              token: figma }
+  - { company: Dropbox,            token: dropbox }
+  - { company: Cloudflare,         token: cloudflare }
+  - { company: Vercel,             token: vercel }
+  - { company: HubSpot,            token: hubspot }
+  - { company: Block,              token: block }
+  - { company: Pinterest,          token: pinterest }
+  - { company: Gusto,              token: gusto }
+  - { company: DoorDash,           token: doordashusa }
+  # CloudKitchens' active Greenhouse board uses the legacy token "css".
+  - { company: CloudKitchens,      token: css }
 
 lever:
   - { company: Palantir,           token: palantir }
@@ -63,6 +83,9 @@ ashby:
   - { company: Cursor,             token: cursor }
   - { company: Cohere,             token: cohere }
   - { company: Snowflake,          token: snowflake }
+  - { company: Sentry,             token: sentry }
+  - { company: Confluent,          token: confluent }
+  - { company: Decagon,            token: decagon }
 
 workday:
   # tenant + wd_num + site come from the careers URL; verify each before trusting.
@@ -71,6 +94,33 @@ workday:
   - { company: Salesforce,     tenant: salesforce, wd_num: 12, site: External_Career_Site }
   - { company: Capital One,    tenant: capitalone, wd_num: 12, site: Capital_One }
   - { company: Morgan Stanley, tenant: ms, wd_num: 5, site: External }
+  - { company: Medtronic,      tenant: medtronic, wd_num: 1, site: MedtronicCareers }
+  - { company: Adobe,          tenant: adobe, wd_num: 5, site: external_experienced }
+  - { company: PayPal,         tenant: paypal, wd_num: 1, site: jobs }
+  - { company: eBay,           tenant: ebay, wd_num: 5, site: apply }
+  - { company: Snap,           tenant: snapchat, wd_num: 1, site: snap }
+  # Walmart's former Workday tenant currently returns ERR_TENANT_MIGRATED.
+  - { company: Walmart, tenant: walmart, wd_num: 5, site: WalmartExternal, enabled: false }
   # Goldman's CXS endpoint rejected the generic body (422) — needs the exact
   # site name from its careers URL. Left disabled until verified.
   - { company: Goldman Sachs, tenant: goldmansachs, wd_num: 1, site: GS_External, enabled: false }
+
+smartrecruiters:
+  - { company: LinkedIn, token: LinkedIn3 }
+
+amazon:
+  - { company: Amazon, exclude_title_terms: [Annapurna] }
+  - { company: Annapurna Labs, search_text: "Annapurna Labs", title_company_term: Annapurna }
+
+oracle_cloud:
+  - { company: Oracle, host: "https://eeho.fa.us2.oraclecloud.com", site_number: CX_45001, job_url_template: "https://careers.oracle.com/en/sites/jobsearch/job/{id}" }
+  - { company: Uber, host: "https://iaziqy.fa.ocs.oraclecloud.com", site_number: CX_45001, job_url_template: "https://jobs.uber.com/en/jobs/{id}/" }
+
+icims_jibe:
+  - { company: SIG Trading, base_url: "https://careers.sig.com", job_path_prefix: jobs }
+  - { company: GitHub, base_url: "https://www.github.careers", job_path_prefix: careers-home/jobs }
+
+custom:
+  - { company: Epic, provider: epic }
+  - { company: Shopify, provider: shopify }
+  - { company: TikTok, provider: tiktok }

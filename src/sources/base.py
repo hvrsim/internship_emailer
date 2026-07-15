@@ -33,6 +33,7 @@ def request_json(
     *,
     json_body: Optional[dict] = None,
     params: Optional[dict] = None,
+    headers: Optional[dict[str, str]] = None,
 ) -> Optional[Any]:
     """GET/POST returning parsed JSON, with retries + timeout. None on failure."""
     cfg = _http_cfg()
@@ -47,7 +48,12 @@ def request_json(
             if delay:
                 time.sleep(delay)
             resp = session.request(
-                method, url, json=json_body, params=params, timeout=timeout
+                method,
+                url,
+                json=json_body,
+                params=params,
+                headers=headers,
+                timeout=timeout,
             )
             if resp.status_code == 404:
                 log.warning("404 (not found): %s", url)

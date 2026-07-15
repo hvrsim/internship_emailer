@@ -39,6 +39,13 @@ def _contains_any(text: str, terms: Iterable[str]) -> bool:
     return any(term in text for term in terms)
 
 
+def _contains_any_whole_term(text: str, terms: Iterable[str]) -> bool:
+    return any(
+        re.search(rf"(?<![a-z0-9]){re.escape(term.lower())}(?![a-z0-9])", text)
+        for term in terms
+    )
+
+
 @lru_cache(maxsize=8)
 def _loc_regex(terms: tuple[str, ...]):
     """Compile location terms into one alternation that won't match inside a
@@ -92,7 +99,6 @@ def is_internship(title_lc: str, role_cfg: dict) -> bool:
 
 
 def classify_category(title_lc: str, categories_cfg: dict) -> Optional[str]:
-    # Dict order is significant (quant before swe before consulting).
     for cat, terms in categories_cfg.items():
         if _contains_any(title_lc, [t.lower() for t in terms]):
             return cat
@@ -121,6 +127,9 @@ def passes(job: Job, f: dict) -> bool:
     title_lc = _lc(job.title)
     role_cfg = f.get("role", {})
     loc_cfg = f.get("location", {})
+
+    if _contains_any_whole_term(title_lc, f.get("blocked_title_terms", [])):
+        return False
 
     # 1) Internship?
     if role_cfg.get("require_internship", True) and not is_internship(title_lc, role_cfg):

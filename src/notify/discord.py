@@ -14,14 +14,10 @@ log = logging.getLogger(__name__)
 
 _CATEGORY_LABELS = {
     "swe": "💻 Software Engineering",
-    "quant": "📈 Quant / Trading",
-    "consulting": "📊 Consulting",
     "other": "🧩 Other",
 }
 _CATEGORY_COLORS = {
     "swe": 0x5865F2,
-    "quant": 0x57F287,
-    "consulting": 0xFEE75C,
     "other": 0x99AAB5,
 }
 _MAX_EMBED_DESCRIPTION = 3_800
@@ -92,7 +88,7 @@ def _category_embeds(category: str, jobs: list[Job]) -> list[dict]:
 
 
 def build_payloads(jobs: list[Job], discord_cfg: dict) -> list[dict]:
-    order = discord_cfg.get("category_order", ["swe", "quant", "consulting", "other"])
+    order = discord_cfg.get("category_order", ["swe", "other"])
     grouped = group_by_category(jobs, order)
     priority = priority_jobs(jobs, discord_cfg.get("priority_companies", []))
 

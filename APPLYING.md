@@ -46,7 +46,7 @@ python -m src.apply
 
 # Useful flags
 python -m src.apply --company Stripe        # only this company
-python -m src.apply --category quant         # only quant roles
+python -m src.apply --category swe           # only software engineering roles
 python -m src.apply --limit 5                # cap this run
 python -m src.apply --mode review_all        # pause on every form
 python -m src.apply --no-cover-letter        # skip cover-letter generation

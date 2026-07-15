@@ -1,6 +1,5 @@
 # Direct company career-site pulls via their Applicant Tracking System (ATS)
-# public JSON APIs. This catches quant/consulting roles the SWE-only community
-# lists miss, and surfaces postings earlier.
+# public JSON APIs. The filter layer keeps only eligible software roles.
 #
 # How to find a company's token:
 #   greenhouse -> the slug in https://boards.greenhouse.io/<token>
@@ -18,7 +17,7 @@
 # community lists in config/github_lists.yaml (which cover these heavily).
 
 greenhouse:
-  # quant / trading  (verified tokens)
+  # Trading firms can still publish eligible software engineering internships.
   - { company: Hudson River Trading, token: hrtcampus }
   - { company: Jane Street,        token: janestreet }
   - { company: IMC Trading,        token: imc }
@@ -66,5 +65,3 @@ workday:
   # Goldman's CXS endpoint rejected the generic body (422) — needs the exact
   # site name from its careers URL. Left disabled until verified.
   - { company: Goldman Sachs, tenant: goldmansachs, wd_num: 1, site: GS_External, enabled: false }
-  # Consulting (tech tracks) are mostly Workday — add when you confirm site names:
-  # - { company: Deloitte,  tenant: deloitte,  wd_num: 1, site: Deloitte_US_External }

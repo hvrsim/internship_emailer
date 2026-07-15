@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 MODEL = "gemini-2.5-flash"
 
 SYSTEM = (
-    "You write concise, specific cover letters for software/quant internship "
+    "You write concise, specific cover letters for software engineering internship "
     "applications. Rules: 200-280 words; 3 short paragraphs; professional but "
     "human (no buzzword salad); ground every claim in the candidate's provided "
     "background — never invent experience, employers, or metrics; tie the "

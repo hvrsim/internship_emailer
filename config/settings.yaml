@@ -29,7 +29,7 @@ discord:
   max_retries: 3
   inter_message_delay_seconds: 0.5
   # Group order in each alert.
-  category_order: [swe, quant, consulting, other]
+  category_order: [swe, other]
   # Alerts containing one of these companies get an urgent headline.
   priority_companies: [meta, facebook, amazon, apple, netflix, google, alphabet]
 

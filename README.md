@@ -1,7 +1,7 @@
 # intern_pos_emailer
 
 A bot that **runs daily on GitHub Actions** and sends Discord alerts for **new US
-software / quant / consulting internship openings** (Summer & Spring / off-cycle).
+software engineering internship openings** (Summer & Spring / off-cycle).
 It pulls from community internship aggregators and directly from company career
 sites (via their ATS APIs), filters to what you care about, remembers what it has
 already shown you, and only alerts on **new** postings.
@@ -16,8 +16,8 @@ sources (github lists + Greenhouse/Lever/Ashby/Workday)
 
 ## What it tracks
 - **Roles:** internships only — Summer & Spring / off-cycle / co-op (configurable).
-- **Categories:** software engineering, software development, quant dev, quant
-  trading, big tech, unicorns, startups, consulting (tech tracks).
+- **Categories:** software engineering and software development. Quant, trading,
+  business, and consulting internships are excluded.
 - **Location:** United States (incl. US-remote).
 
 All of this is tunable in `config/` — no code changes needed.
@@ -93,9 +93,8 @@ Notes:
 - Adjust the time by editing the `cron:` line (it's in UTC).
 
 ## Tuning
-- **`config/companies.yaml`** — add companies by ATS + token. Quant firms and
-  consulting are seeded here because the community lists skew SWE. Some seed tokens
-  are best-effort — run `--dry-run` and disable any that 404 (`enabled: false`).
+- **`config/companies.yaml`** — add companies by ATS + token. Some seed tokens are
+  best-effort — run `--dry-run` and disable any that 404 (`enabled: false`).
 - **`config/github_lists.yaml`** — the community `listings.json` URLs. These repos
   roll names each cycle (`Summer2026` → `Summer2027`); update the URL when the new
   cycle's repo appears.

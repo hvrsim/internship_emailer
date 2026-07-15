@@ -25,16 +25,25 @@ def test_swe_summer_intern_us_kept():
     assert j.season == "summer" or j.season is None  # season may be undetected from title
 
 
-def test_quant_intern_classified_as_quant():
+def test_quant_intern_rejected():
     j = _job("Quantitative Trading Intern", ["Chicago, IL"])
-    assert passes(j, F)
-    assert j.category == "quant"
+    assert not passes(j, F)
 
 
-def test_consulting_intern_kept():
+def test_consulting_intern_rejected():
     j = _job("Technology Analyst Intern", ["Boston, MA"])
+    assert not passes(j, F)
+
+
+def test_business_software_intern_rejected():
+    j = _job("Business Software Developer Intern", ["Boston, MA"])
+    assert not passes(j, F)
+
+
+def test_quantum_software_intern_kept():
+    j = _job("Quantum Software Engineer Intern", ["Boston, MA"])
     assert passes(j, F)
-    assert j.category == "consulting"
+    assert j.category == "swe"
 
 
 def test_fulltime_senior_role_rejected():

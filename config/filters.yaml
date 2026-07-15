@@ -30,7 +30,6 @@ role:
     - director
     - "full-time" # only excluded when no internship term present (see code)
     - "full time"
-
   # Seasons we accept. A job's season is detected from tags or title.
   # Empty list = accept any season.
   seasons:
@@ -46,19 +45,22 @@ role:
     - 2026
     - 2027
 
+# Reject these whole words in titles before category classification. Whole-word
+# matching prevents "quant" from accidentally excluding "quantum" software roles.
+blocked_title_terms:
+  - quant
+  - quantitative
+  - trading
+  - trader
+  - business
+  - consulting
+  - consultant
+
 # ---------------------------------------------------------------------------
-# 2) CATEGORY KEYWORDS  (title is matched against each group; first hit wins)
-#    Order matters: quant is checked before generic swe so "quant developer"
-#    classifies as quant, not swe.
+# 2) CATEGORY KEYWORDS
+#    Only software engineering internships are eligible for alerts.
 # ---------------------------------------------------------------------------
 categories:
-  quant:
-    - quant
-    - quantitative
-    - trading
-    - trader
-    - "systematic"
-    - "algorithmic"
   swe:
     - software engineer
     - software engineering
@@ -79,13 +81,6 @@ categories:
     - "infrastructure engineer"
     - "platform engineer"
     - "systems engineer"
-  consulting:
-    - consulting
-    - consultant
-    - "technology analyst"
-    - "tech consulting"
-    - "business analyst"   # consulting firms' entry tech/strategy track
-
 # If true, a job must match at least one category group to be kept.
 require_category: true
 

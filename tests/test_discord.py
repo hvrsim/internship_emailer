@@ -27,9 +27,9 @@ def test_priority_company_uses_token_matching():
 
 def test_payload_groups_jobs_and_highlights_priority_companies():
     payloads = discord.build_payloads(
-        [_job("Meta"), _job("Acme", "quant")],
+        [_job("Meta"), _job("Acme", "other")],
         {
-            "category_order": ["swe", "quant"],
+            "category_order": ["swe", "other"],
             "priority_companies": PRIORITY,
             "username": "Job Bot",
         },
@@ -39,7 +39,7 @@ def test_payload_groups_jobs_and_highlights_priority_companies():
     assert payloads[0]["username"] == "Job Bot"
     assert [embed["title"] for embed in payloads[0]["embeds"]] == [
         "💻 Software Engineering (1)",
-        "📈 Quant / Trading (1)",
+        "🧩 Other (1)",
     ]
     assert payloads[0]["allowed_mentions"] == {"parse": []}
 

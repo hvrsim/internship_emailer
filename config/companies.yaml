@@ -25,10 +25,14 @@ greenhouse:
   - { company: Jump Trading,       token: jumptrading }
   - { company: DRW,                token: drweng }
   - { company: Akuna Capital,      token: akunacapital }
+  - { company: Five Rings,         token: fiveringsllc }
   # big tech / unicorns / startups  (verified tokens)
   - { company: SpaceX,             token: spacex }
   - { company: Stripe,             token: stripe }
   - { company: Databricks,         token: databricks }
+  - { company: Datadog,            token: datadog }
+  - { company: Waymo,              token: waymo }
+  - { company: Glean,              token: gleanwork }
   - { company: Scale AI,           token: scaleai }
   - { company: Airbnb,             token: airbnb }
   - { company: Coinbase,           token: coinbase }
@@ -37,6 +41,7 @@ greenhouse:
   - { company: Robinhood,          token: robinhood }
   - { company: Affirm,             token: affirm }
   - { company: Brex,               token: brex }
+  - { company: Lyft,               token: lyft }
   - { company: Discord,            token: discord }
   - { company: Samsara,            token: samsara }
   - { company: Nuro,               token: nuro }
@@ -46,6 +51,7 @@ greenhouse:
 
 lever:
   - { company: Palantir,           token: palantir }
+  - { company: Belvedere Trading,  token: belvederetrading }
   - { company: Plaid,              token: plaid }
   - { company: Netflix,            token: netflix }
 
@@ -55,10 +61,13 @@ ashby:
   - { company: Notion,             token: notion }
   - { company: Linear,             token: linear }
   - { company: Cursor,             token: cursor }
+  - { company: Cohere,             token: cohere }
+  - { company: Snowflake,          token: snowflake }
 
 workday:
   # tenant + wd_num + site come from the careers URL; verify each before trusting.
   - { company: NVIDIA,         tenant: nvidia,     wd_num: 5,  site: NVIDIAExternalCareerSite }
+  - { company: Visa,           tenant: visa,       wd_num: 5,  site: Visa }
   - { company: Salesforce,     tenant: salesforce, wd_num: 12, site: External_Career_Site }
   - { company: Capital One,    tenant: capitalone, wd_num: 12, site: Capital_One }
   - { company: Morgan Stanley, tenant: ms, wd_num: 5, site: External }

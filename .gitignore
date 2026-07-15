@@ -10,6 +10,7 @@ resumes/
 
 # Personal apply data (local-only)
 config/profile.yaml
+config/settings.local.yaml
 data/applications.json
 data/applications.csv
 Vatsal Maheshwari Resume.pdf

@@ -7,6 +7,3 @@ lxml>=4.9
 
 # dev / test
 pytest>=7
-
-# optional: only needed if you ever re-enable SMS in config/settings.yaml
-# twilio>=8

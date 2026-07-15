@@ -27,6 +27,23 @@ def _load_yaml(name: str) -> dict[str, Any]:
         return yaml.safe_load(fh) or {}
 
 
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    merged = base.copy()
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def _apply_environment_overrides(values: dict[str, Any]) -> dict[str, Any]:
+    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
+    if not webhook_url:
+        return values
+    return _deep_merge(values, {"discord": {"webhook_url": webhook_url}})
+
+
 @lru_cache(maxsize=None)
 def filters() -> dict[str, Any]:
     return _load_yaml("filters.yaml")
@@ -44,23 +61,14 @@ def companies() -> dict[str, Any]:
 
 @lru_cache(maxsize=None)
 def settings() -> dict[str, Any]:
-    return _load_yaml("settings.yaml")
+    return _apply_environment_overrides(
+        _deep_merge(
+            _load_yaml("settings.yaml"),
+            _load_yaml("settings.local.yaml"),
+        )
+    )
 
 
 def state_path() -> Path:
     rel = settings().get("state_file", "data/seen_jobs.json")
     return ROOT / rel
-
-
-def secrets() -> dict[str, str]:
-    """Return notification secrets from the environment (may be empty)."""
-    keys = [
-        "GMAIL_USER",
-        "GMAIL_APP_PASSWORD",
-        "EMAIL_TO",
-        "TWILIO_ACCOUNT_SID",
-        "TWILIO_AUTH_TOKEN",
-        "TWILIO_FROM",
-        "SMS_TO",
-    ]
-    return {k: os.environ.get(k, "") for k in keys}

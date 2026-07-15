@@ -1,6 +1,6 @@
 # Auto-apply (local)
 
-The daily bot finds and emails you internships. This tool **applies** to them —
+The daily bot finds internships and alerts you on Discord. This tool **applies** to them —
 it opens each job's application form in a real browser, fills your details,
 generates a tailored cover letter with Gemini 2.5 Flash, and either auto-submits
 simple forms or pauses for you to review forms with custom questions.
@@ -59,7 +59,7 @@ prepared), so re-runs never double-apply.
 
 ## Scope & honest expectations
 - **Coverage:** Greenhouse / Lever / Ashby today. Workday and custom career sites
-  aren't auto-fillable yet — you'll still get those in the email digest to apply by hand.
+  aren't auto-fillable yet — you'll still get those in the Discord alert to apply by hand.
 - **Field filling is best-effort.** Forms vary; the tool fills what it confidently
   recognizes and flags the rest for your review. Verified working on live Greenhouse
   forms (fills name/email/phone/links/school + resume, detects custom questions).

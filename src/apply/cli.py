@@ -7,7 +7,7 @@
     python -m src.apply --company Stripe --category swe
 
 Runs locally with a visible browser so you can watch, solve CAPTCHAs, and review
-before submit. The daily email job is separate and unaffected.
+before submit. The daily Discord alert job is separate and unaffected.
 """
 
 from __future__ import annotations

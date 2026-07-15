@@ -3,8 +3,8 @@
 Usage:
     python -m src.main                 # full run (fetch, notify, persist state)
     python -m src.main --dry-run       # fetch + filter, print what WOULD send; no send, no save
-    python -m src.main --test-notify   # send one sample email + SMS to verify credentials
-    python -m src.main --no-sms        # run but skip SMS
+    python -m src.main --test-notify   # send one sample Discord alert
+    python -m src.main --no-discord    # run but skip Discord
     python -m src.main --limit 5       # cap sources (debugging)
 """
 
@@ -19,8 +19,7 @@ from . import config
 from .dedup import load_state, new_jobs, prune, save_state, update_state
 from .filters import apply_filters
 from .models import Job
-from .notify import email as email_notify
-from .notify import sms as sms_notify
+from .notify import discord as discord_notify
 from .sources.base import make_session
 from .sources.registry import build_all_sources
 
@@ -48,15 +47,15 @@ def collect_jobs(limit: int | None = None) -> list[Job]:
 
 
 def _print_digest(jobs: list[Job]) -> None:
-    order = config.settings().get("email", {}).get(
+    order = config.settings().get("discord", {}).get(
         "category_order", ["swe", "quant", "consulting", "other"]
     )
-    grouped = email_notify.group_by_category(jobs, order)
+    grouped = discord_notify.group_by_category(jobs, order)
     print("\n" + "=" * 70)
     print(f"  {len(jobs)} NEW matching internship(s)")
     print("=" * 70)
     for cat, group in grouped:
-        label = email_notify._CATEGORY_LABELS.get(cat, cat)
+        label = discord_notify._CATEGORY_LABELS.get(cat, cat)
         print(f"\n{label} ({len(group)})")
         for j in sorted(group, key=lambda x: (x.company.lower(), x.title.lower())):
             loc = j.location_str or "—"
@@ -66,7 +65,6 @@ def _print_digest(jobs: list[Job]) -> None:
 
 
 def run_test_notify() -> int:
-    secrets = config.secrets()
     settings = config.settings()
     sample = Job(
         company="Example Corp",
@@ -77,19 +75,13 @@ def run_test_notify() -> int:
         season="summer",
         year=2027,
     )
-    sent_email = email_notify.send_email([sample], secrets, settings.get("email", {}))
-    sms_cfg = settings.get("sms", {})
-    sent_sms = False
-    if sms_cfg.get("enabled", False):
-        body = sms_notify.build_body(1, sms_cfg.get("template", "{n} new internships"))
-        sent_sms = sms_notify.send_sms(f"[TEST] {body}", secrets)
-    log.info("test-notify: email=%s sms=%s", sent_email, sent_sms)
-    return 0 if (sent_email or sent_sms) else 1
+    sent = discord_notify.send_discord([sample], settings.get("discord", {}))
+    log.info("test-notify: discord=%s", sent)
+    return 0 if sent else 1
 
 
-def run(dry_run: bool, do_email: bool, do_sms: bool, limit: int | None, seed: bool = False) -> int:
+def run(dry_run: bool, do_discord: bool, limit: int | None, seed: bool = False) -> int:
     settings = config.settings()
-    secrets = config.secrets()
     today = datetime.now().date()
 
     raw = collect_jobs(limit=limit)
@@ -126,13 +118,11 @@ def run(dry_run: bool, do_email: bool, do_sms: bool, limit: int | None, seed: bo
         return 0
 
     if fresh:
-        email_cfg = settings.get("email", {})
-        sms_cfg = settings.get("sms", {})
-        if do_email and email_cfg.get("enabled", True):
-            email_notify.send_email(fresh, secrets, email_cfg)
-        if do_sms and sms_cfg.get("enabled", True) and len(fresh) >= sms_cfg.get("min_jobs", 1):
-            body = sms_notify.build_body(len(fresh), sms_cfg.get("template", "{n} new internships"))
-            sms_notify.send_sms(body, secrets)
+        discord_cfg = settings.get("discord", {})
+        if do_discord and discord_cfg.get("enabled", True):
+            if not discord_notify.send_discord(fresh, discord_cfg):
+                log.error("state not updated because the Discord alert was not delivered")
+                return 1
 
     # Persist: record the new jobs as seen, prune old entries.
     state = update_state(state, fresh, today)
@@ -147,9 +137,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Daily internship scraper + notifier")
     parser.add_argument("--dry-run", action="store_true", help="fetch+filter, print, do not send or save")
     parser.add_argument("--seed", action="store_true", help="mark all current matches as seen without sending (run once on first deploy)")
-    parser.add_argument("--test-notify", action="store_true", help="send a sample email+SMS to verify creds")
-    parser.add_argument("--no-email", action="store_true", help="skip email this run")
-    parser.add_argument("--no-sms", action="store_true", help="skip SMS this run")
+    parser.add_argument("--test-notify", action="store_true", help="send a sample Discord alert")
+    parser.add_argument("--no-discord", action="store_true", help="skip Discord this run")
     parser.add_argument("--limit", type=int, default=None, help="cap number of sources (debug)")
     args = parser.parse_args(argv)
 
@@ -157,8 +146,7 @@ def main(argv: list[str] | None = None) -> int:
         return run_test_notify()
     return run(
         dry_run=args.dry_run,
-        do_email=not args.no_email,
-        do_sms=not args.no_sms,
+        do_discord=not args.no_discord,
         limit=args.limit,
         seed=args.seed,
     )

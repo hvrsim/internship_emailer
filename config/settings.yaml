@@ -19,30 +19,24 @@ http:
 # Per-source cap on number of jobs pulled (0 = unlimited). Safety valve.
 max_jobs_per_source: 0
 
-# Email digest.
-email:
+# Discord webhook alerts. Put the real URL in the gitignored
+# config/settings.local.yaml file instead of committing it here.
+discord:
   enabled: true
-  subject_prefix: "[Intern Alert]"
-  # group order in the digest
+  webhook_url: ""
+  username: "Internship Alerts"
+  timeout_seconds: 20
+  max_retries: 3
+  inter_message_delay_seconds: 0.5
+  # Group order in each alert.
   category_order: [swe, quant, consulting, other]
-  # When a NEW posting is from one of these companies, the digest goes URGENT:
-  # subject + headline become "FAANG job out now" and the roles are banner-ed at
-  # the top. Edit freely (e.g. add nvidia, microsoft).
-  faang_companies: [meta, facebook, amazon, apple, netflix, google, alphabet]
-
-# SMS nudge (OFF — email-only setup). To enable later: set enabled: true,
-# uncomment twilio in requirements.txt, and add the TWILIO_* secrets.
-sms:
-  enabled: false
-  # template; {n} is replaced with the new-job count
-  template: "{n} new SWE/quant/consulting internships today. Check your email for the digest."
-  # don't send an SMS unless at least this many new jobs (avoids paying for tiny alerts)
-  min_jobs: 1
+  # Alerts containing one of these companies get an urgent headline.
+  priority_companies: [meta, facebook, amazon, apple, netflix, google, alphabet]
 
 # If true, send nothing on days with zero new jobs (recommended — no noise).
 suppress_when_empty: true
 
-# Auto-apply tool (LOCAL only: python -m src.apply). The daily email job ignores this.
+# Auto-apply tool (LOCAL only: python -m src.apply). The daily alert job ignores this.
 apply:
   # auto_simple_review_hard: auto-submit forms with no extra required fields,
   #                          pause for your review when a form has custom questions.
@@ -52,5 +46,5 @@ apply:
   generate_cover_letter: true   # needs GEMINI_API_KEY (Gemini 2.5 Flash)
   daily_limit: 10               # max applications per run
   # ATSes the apply tool knows how to fill. Jobs from other sources are skipped
-  # (you still get them in the email digest).
+  # (you still get them in the Discord alert).
   supported_ats: [greenhouse, lever, ashby]

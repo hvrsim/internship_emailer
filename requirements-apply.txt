@@ -1,5 +1,5 @@
 # Dependencies for the LOCAL auto-apply tool (python -m src.apply).
-# Not needed for the daily email job, so kept out of requirements.txt.
+# Not needed for the daily Discord alert job, so kept out of requirements.txt.
 #
 #   pip install -r requirements.txt -r requirements-apply.txt
 #   playwright install chromium      # one-time browser download

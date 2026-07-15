@@ -1,0 +1,171 @@
+"""Discord webhook notifications."""
+
+from __future__ import annotations
+
+import logging
+import re
+import time
+
+import requests
+
+from ..models import Job
+
+log = logging.getLogger(__name__)
+
+_CATEGORY_LABELS = {
+    "swe": "💻 Software Engineering",
+    "quant": "📈 Quant / Trading",
+    "consulting": "📊 Consulting",
+    "other": "🧩 Other",
+}
+_CATEGORY_COLORS = {
+    "swe": 0x5865F2,
+    "quant": 0x57F287,
+    "consulting": 0xFEE75C,
+    "other": 0x99AAB5,
+}
+_MAX_EMBED_DESCRIPTION = 3_800
+_MAX_EMBED_TEXT_PER_MESSAGE = 5_800
+
+
+def is_priority_company(company: str, terms: list[str]) -> bool:
+    """Token-based match so 'apple' hits 'Apple Inc' but not 'Snapple'."""
+    tokens = set(re.findall(r"[a-z0-9]+", (company or "").lower()))
+    return any(term.lower() in tokens for term in terms or [])
+
+
+def priority_jobs(jobs: list[Job], terms: list[str]) -> list[Job]:
+    return [job for job in jobs if is_priority_company(job.company, terms)]
+
+
+def group_by_category(jobs: list[Job], order: list[str]) -> list[tuple[str, list[Job]]]:
+    buckets: dict[str, list[Job]] = {}
+    for job in jobs:
+        buckets.setdefault(job.category or "other", []).append(job)
+    ordered_keys = [category for category in order if category in buckets]
+    ordered_keys += [category for category in buckets if category not in order]
+    return [(category, buckets[category]) for category in ordered_keys]
+
+
+def _escape_markdown(value: str) -> str:
+    return re.sub(r"([\\*_`~|>])", r"\\\1", value)
+
+
+def _job_line(job: Job) -> str:
+    title = _escape_markdown(job.title[:256])
+    company = _escape_markdown(job.company[:128])
+    metadata = [
+        job.location_str[:256] or "Location not listed",
+        job.season,
+        str(job.year) if job.year else None,
+    ]
+    details = _escape_markdown(" · ".join(value for value in metadata if value))
+    url = job.url[:1_800]
+    return f"**{title}** — {company}\n{details} · <{url}>"
+
+
+def _category_embeds(category: str, jobs: list[Job]) -> list[dict]:
+    chunks: list[str] = []
+    current: list[str] = []
+    current_length = 0
+    for job in sorted(jobs, key=lambda item: (item.company.lower(), item.title.lower())):
+        line = _job_line(job)
+        added_length = len(line) + (2 if current else 0)
+        if current and current_length + added_length > _MAX_EMBED_DESCRIPTION:
+            chunks.append("\n\n".join(current))
+            current = []
+            current_length = 0
+        current.append(line)
+        current_length += len(line) + (2 if len(current) > 1 else 0)
+    if current:
+        chunks.append("\n\n".join(current))
+
+    label = _CATEGORY_LABELS.get(category, category.title())
+    return [
+        {
+            "title": f"{label} ({len(jobs)})" + (f" · Part {index + 1}" if len(chunks) > 1 else ""),
+            "description": chunk,
+            "color": _CATEGORY_COLORS.get(category, _CATEGORY_COLORS["other"]),
+        }
+        for index, chunk in enumerate(chunks)
+    ]
+
+
+def build_payloads(jobs: list[Job], discord_cfg: dict) -> list[dict]:
+    order = discord_cfg.get("category_order", ["swe", "quant", "consulting", "other"])
+    grouped = group_by_category(jobs, order)
+    priority = priority_jobs(jobs, discord_cfg.get("priority_companies", []))
+
+    if priority:
+        companies = ", ".join(sorted({job.company for job in priority}))
+        headline = f"🚨 **Priority internship alert: {companies}** — {len(jobs)} new posting(s)"
+    else:
+        headline = f"🚀 **Internship alert** — {len(jobs)} new posting(s)"
+    headline = headline[:2_000]
+
+    embeds = [
+        embed
+        for category, category_jobs in grouped
+        for embed in _category_embeds(category, category_jobs)
+    ]
+    payloads: list[dict] = []
+    current: list[dict] = []
+    current_length = 0
+    for embed in embeds:
+        embed_length = len(embed["title"]) + len(embed["description"])
+        if current and (
+            len(current) >= 10
+            or current_length + embed_length > _MAX_EMBED_TEXT_PER_MESSAGE
+        ):
+            payloads.append({"embeds": current})
+            current = []
+            current_length = 0
+        current.append(embed)
+        current_length += embed_length
+    if current:
+        payloads.append({"embeds": current})
+    if not payloads:
+        payloads.append({})
+
+    payloads[0]["content"] = headline
+    for payload in payloads:
+        payload["username"] = discord_cfg.get("username", "Internship Alerts")
+        avatar_url = discord_cfg.get("avatar_url")
+        if avatar_url:
+            payload["avatar_url"] = avatar_url
+        payload["allowed_mentions"] = {"parse": []}
+    return payloads
+
+
+def send_discord(jobs: list[Job], discord_cfg: dict) -> bool:
+    """Send the digest to the configured Discord webhook."""
+    webhook_url = str(discord_cfg.get("webhook_url", "")).strip()
+    if not webhook_url:
+        log.warning("discord skipped: discord.webhook_url is not set in config/settings.yaml")
+        return False
+
+    timeout = discord_cfg.get("timeout_seconds", 20)
+    max_retries = discord_cfg.get("max_retries", 3)
+    inter_message_delay = discord_cfg.get("inter_message_delay_seconds", 0.5)
+    try:
+        payloads = build_payloads(jobs, discord_cfg)
+        for index, payload in enumerate(payloads):
+            for attempt in range(max_retries + 1):
+                response = requests.post(webhook_url, json=payload, timeout=timeout)
+                if response.status_code != 429:
+                    response.raise_for_status()
+                    break
+                if attempt == max_retries:
+                    response.raise_for_status()
+                try:
+                    retry_after = float(response.json().get("retry_after", 1))
+                except (TypeError, ValueError, requests.JSONDecodeError):
+                    retry_after = 1
+                time.sleep(max(retry_after, 0))
+            if index < len(payloads) - 1:
+                time.sleep(inter_message_delay)
+        log.info("discord alert sent (%d jobs in %d message(s))", len(jobs), len(payloads))
+        return True
+    except requests.RequestException as exc:
+        log.error("discord send failed: %s", exc)
+        return False
